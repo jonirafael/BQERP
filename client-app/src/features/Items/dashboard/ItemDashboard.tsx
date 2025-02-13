@@ -14,6 +14,7 @@ interface Props {
   closeForm: () => void;
   createOrEdit: (item: Item) => void;
   deleteItem: (id: string) => void;
+  submitting: boolean;
 }
 
 export default function ItemDashboard({
@@ -26,6 +27,7 @@ export default function ItemDashboard({
   closeForm,
   createOrEdit,
   deleteItem,
+  submitting
 }: Props) {
   return (
     <Grid>
@@ -34,6 +36,7 @@ export default function ItemDashboard({
           items={items}
           selectItem={selectItem}
           deleteItem={deleteItem}
+          submitting={submitting}
         />
       </Grid.Column>
       <Grid.Column width="6">
@@ -49,6 +52,7 @@ export default function ItemDashboard({
             closeForm={closeForm}
             item={selectedItem}
             createOrEdit={createOrEdit}
+            submitting={submitting}
           />
         )}
       </Grid.Column>

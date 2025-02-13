@@ -1,19 +1,23 @@
 import { Fragment, useEffect, useState } from "react";
-import axios from "axios";
 import { Container } from "semantic-ui-react";
 import { Item } from "../models/item";
 import NavBar from "./NavBar";
 import ItemDashboard from "../../features/Items/dashboard/ItemDashboard";
-import {v4 as uuid} from 'uuid';
+import { v4 as uuid } from "uuid";
+import agent from "../api/agent";
+import LoadingComponent from "./LoadingComponent";
 
 function App() {
   const [items, setItems] = useState<Item[]>([]);
   const [selectedItem, setSelectedItem] = useState<Item | undefined>(undefined);
   const [editMode, setEditMode] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    axios.get<Item[]>("http://localhost:5000/api/items").then((Response) => {
-      setItems(Response.data);
+    agent.Items.list().then((response) => {
+      setItems(response);
+      setLoading(false);
     });
   }, []);
 
@@ -35,16 +39,34 @@ function App() {
   }
 
   function handleCreateOrEditActivity(item: Item) {
-    item.id
-      ? setItems([...items.filter(x => x.id !== item.id), item])
-      : setItems([...items, {...item, id: uuid()}]);
-    setEditMode(false);
-    setSelectedItem(item);
+    setSubmitting(true);
+    if (item.id) {
+      agent.Items.update(item).then(() => {
+        setItems([...items.filter((x) => x.id !== item.id), item]);
+        setSelectedItem(item);
+        setEditMode(false);
+        setSubmitting(false);
+      });
+    } else {
+      item.id = uuid();
+      agent.Items.create(item).then(()=> {
+        setItems([...items,item])
+        setSelectedItem(item);
+        setEditMode(false);
+        setSubmitting(false);        
+      })
+    }
   }
 
   function handleDeleteItem(id: string) {
-    setItems([...items.filter(x => x.id !== id)])
+    setSubmitting(true);
+    agent.Items.delete(id).then(() => {
+      setItems([...items.filter((x) => x.id !== id)]);
+      setSubmitting(false);
+    });
   }
+
+  if (loading) return <LoadingComponent content="Loading app" />;
 
   return (
     <Fragment>
@@ -60,6 +82,7 @@ function App() {
           closeForm={handleFormClose}
           createOrEdit={handleCreateOrEditActivity}
           deleteItem={handleDeleteItem}
+          submitting={submitting}
         />
       </Container>
     </Fragment>
